@@ -17,6 +17,11 @@ namespace FinanceAssistant.API.Data
         public DbSet<Card> Cards { get; set; }
         public DbSet<Installment> Installments { get; set; }
         public DbSet<UserSettings> UserSettings { get; set; }
+        public DbSet<RegularIncome> RegularIncomes { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<FinancialReport> FinancialReports { get; set; }
+        public DbSet<FinancialReportDetail> FinancialReportDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -70,6 +75,35 @@ namespace FinanceAssistant.API.Data
                 .Property(i => i.MonthlyAmount)
                 .HasPrecision(18, 2);
 
+            modelBuilder.Entity<RegularIncome>()
+                .Property(r => r.Amount)
+                .HasPrecision(18, 2);
+
+            // RegularIncome configuration
+            modelBuilder.Entity<RegularIncome>()
+                .Property(r => r.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            modelBuilder.Entity<RegularIncome>()
+                .Property(r => r.IsActive)
+                .HasDefaultValue(true);
+
+            modelBuilder.Entity<RegularIncome>()
+                .Property(r => r.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<RegularIncome>()
+                .Property(r => r.DayOfMonth)
+                .IsRequired();
+
+            // User - RegularIncome relationship
+            modelBuilder.Entity<RegularIncome>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Kart ve Taksit ilişkisi
             modelBuilder.Entity<Card>()
                 .HasMany(c => c.Installments)
@@ -110,6 +144,37 @@ namespace FinanceAssistant.API.Data
             modelBuilder.Entity<UserSettings>()
                 .Property(s => s.IsTwoFactorEnabled)
                 .HasDefaultValue(false);
+
+            // Invoice configuration
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.Amount)
+                .HasPrecision(18, 2);
+
+            // FinancialReport configuration
+            modelBuilder.Entity<FinancialReport>()
+                .Property(f => f.TotalIncome)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<FinancialReport>()
+                .Property(f => f.TotalExpense)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<FinancialReport>()
+                .Property(f => f.Balance)
+                .HasPrecision(18, 2);
+
+            // FinancialReportDetail configuration
+            modelBuilder.Entity<FinancialReportDetail>()
+                .Property(f => f.Amount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<FinancialReportDetail>()
+                .Property(f => f.AverageAmount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<FinancialReportDetail>()
+                .Property(f => f.PercentageOfTotal)
+                .HasPrecision(5, 2);
         }
     }
 } 

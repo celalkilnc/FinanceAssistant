@@ -10,5 +10,9 @@ namespace FinanceAssistant.API.Models
         public DateTime Date { get; set; }
         public string Category { get; set; }
         public string PaymentMethod { get; set; }
+
+        // User relationship
+        public string UserId { get; set; }
+        public virtual ApplicationUser User { get; set; }
     }
 } 
