@@ -36,13 +36,13 @@ namespace FinanceAssistant.API.Controllers
             // Username kontrolü
             if (await _userManager.FindByNameAsync(model.Username) != null)
             {
-                return BadRequest("Bu kullanıcı adı zaten kullanılıyor.");
+                return BadRequest("Username is already taken.");
             }
 
             // Email kontrolü
             if (await _userManager.FindByEmailAsync(model.Email) != null)
             {
-                return BadRequest("Bu email adresi zaten kullanılıyor.");
+                return BadRequest("Email address is already registered.");
             }
 
             var user = new ApplicationUser
@@ -51,7 +51,7 @@ namespace FinanceAssistant.API.Controllers
                 Email = model.Email,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
-                EmailConfirmed = true // Email doğrulaması olmadan kullanıcı giriş yapabilsin
+                EmailConfirmed = true // Email verification disabled for now
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -60,7 +60,7 @@ namespace FinanceAssistant.API.Controllers
             {
                 await _userManager.AddToRoleAsync(user, "User");
                 
-                // Kullanıcı ayarlarını oluştur
+                // Create user settings
                 var userSettings = new UserSettings
                 {
                     UserId = user.Id,
@@ -71,7 +71,7 @@ namespace FinanceAssistant.API.Controllers
                 _context.UserSettings.Add(userSettings);
                 await _context.SaveChangesAsync();
 
-                return Ok(new { message = "Kullanıcı başarıyla oluşturuldu." });
+                return Ok(new { message = "User created successfully." });
             }
 
             return BadRequest(result.Errors);
@@ -83,7 +83,7 @@ namespace FinanceAssistant.API.Controllers
             var user = await _userManager.FindByNameAsync(model.Username);
             if (user == null)
             {
-                return BadRequest("Kullanıcı bulunamadı.");
+                return BadRequest("User not found.");
             }
 
             var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, false);
@@ -108,7 +108,7 @@ namespace FinanceAssistant.API.Controllers
                 return Ok(new { requiresTwoFactor = true });
             }
 
-            return BadRequest("Geçersiz giriş denemesi.");
+            return BadRequest("Invalid login attempt.");
         }
 
         private string GenerateJwtToken(ApplicationUser user)

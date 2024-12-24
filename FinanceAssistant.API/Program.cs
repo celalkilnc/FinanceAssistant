@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-// CORS politikasını ekliyoruz
+// Add CORS policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -25,11 +25,11 @@ builder.Services.AddCors(options =>
         });
 });
 
-// DbContext'i ekliyoruz
+// Add DbContext
 builder.Services.AddDbContext<FinanceContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Identity ayarlarını ekliyoruz
+// Add Identity settings
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     // Password settings
@@ -52,7 +52,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<FinanceContext>()
 .AddDefaultTokenProviders();
 
-// JWT Authentication ayarlarını ekliyoruz
+// Add JWT Authentication settings
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -84,7 +84,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Veritabanını oluştur
+// Automatically create database and apply migrations
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -93,19 +93,27 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<FinanceContext>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
 
-        context.Database.EnsureCreated();
+        logger.LogInformation("Starting database migrations...");
+        
+        // Create database and apply migrations
+        context.Database.Migrate();
+        
+        logger.LogInformation("Database migrations completed successfully.");
 
-        // Varsayılan rolleri oluştur
+        // Create default roles
         if (!await roleManager.RoleExistsAsync("User"))
         {
             await roleManager.CreateAsync(new IdentityRole("User"));
+            logger.LogInformation("Default 'User' role created.");
         }
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Veritabanı oluşturulurken bir hata oluştu.");
+        logger.LogError(ex, "An error occurred while creating/migrating the database.");
+        throw; // Stop application if there's an error during startup
     }
 }
 
@@ -118,7 +126,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// CORS middleware'ini ekliyoruz
+// Add CORS middleware
 app.UseCors("AllowAll");
 
 app.UseAuthentication();

@@ -22,6 +22,37 @@ namespace FinanceAssistant.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // PostgreSQL için tablo isimlerini küçük harfe çevir
+            foreach (var entity in modelBuilder.Model.GetEntityTypes())
+            {
+                // Tablo adını küçük harfe çevir
+                entity.SetTableName(entity.GetTableName().ToLower());
+
+                // Tüm kolonları küçük harfe çevir
+                foreach (var property in entity.GetProperties())
+                {
+                    property.SetColumnName(property.GetColumnName().ToLower());
+                }
+
+                // Tüm primary key constraint isimlerini küçük harfe çevir
+                foreach (var key in entity.GetKeys())
+                {
+                    key.SetName(key.GetName().ToLower());
+                }
+
+                // Tüm foreign key constraint isimlerini küçük harfe çevir
+                foreach (var key in entity.GetForeignKeys())
+                {
+                    key.SetConstraintName(key.GetConstraintName().ToLower());
+                }
+
+                // Tüm index isimlerini küçük harfe çevir
+                foreach (var index in entity.GetIndexes())
+                {
+                    index.SetDatabaseName(index.GetDatabaseName().ToLower());
+                }
+            }
+
             // Para alanları için hassasiyet ayarları
             modelBuilder.Entity<Expense>()
                 .Property(e => e.Amount)
@@ -74,7 +105,7 @@ namespace FinanceAssistant.API.Data
             // UserSettings için default değerler
             modelBuilder.Entity<UserSettings>()
                 .Property(s => s.CreatedAt)
-                .HasDefaultValueSql("GETDATE()");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP"); // PostgreSQL syntax
 
             modelBuilder.Entity<UserSettings>()
                 .Property(s => s.IsTwoFactorEnabled)
